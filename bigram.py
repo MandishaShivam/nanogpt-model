@@ -4,7 +4,7 @@ import torch.nn as nn
 from torch.nn import functional as F
 from urllib.request import urlopen
 
-# ============================================================
+# ================souece ============================================
 # 1. HYPERPARAMETERS
 # ============================================================
 
@@ -33,9 +33,7 @@ print("Using device:", device)
 # ============================================================
 
 url = (
-    "https://raw.githubusercontent.com/"
-    "MandishaShivam/nanogpt-model/main/master/data/"
-    "conversation-input.txt"
+    "https://raw.githubusercontent.com/MandishaShivam/nanogpt-model/main/master/data/conversation-input.txt"
 )
 
 try:
