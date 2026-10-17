@@ -50,6 +50,22 @@ print("Total characters:", len(text))
 print("\nDataset preview:\n")
 print(text[:500])
 
+from collections import Counter
+
+print("\n--- DATASET DEBUG ---")
+print("Total characters:", len(text))
+print("Unique characters:", len(set(text)))
+print("Newlines:", text.count("\n"))
+print("Carriage returns:", text.count("\r"))
+print("Human 1 occurrences:", text.count("Human 1:"))
+print("Human 2 occurrences:", text.count("Human 2:"))
+
+print("\nMost common characters:")
+print(Counter(text).most_common(20))
+
+print("\nLast 500 characters of dataset:")
+print(repr(text[-500:]))
+
 
 # ============================================================
 # 3. CREATE CHARACTER VOCABULARY AND TOKENIZER
@@ -279,6 +295,38 @@ print(f"Final train loss: {losses['train']:.4f}")
 print(f"Final validation loss: {losses['val']:.4f}")
 
 
+print("\n--- NEXT CHARACTER DEBUG ---")
+
+model.eval()
+
+test_chars = ["H", "u", "m", "a", " "]
+
+with torch.no_grad():
+    for ch in test_chars:
+        if ch not in stoi:
+            continue
+
+        idx = torch.tensor(
+            [[stoi[ch]]],
+            dtype=torch.long,
+            device=device
+        )
+
+        logits, _ = model(idx)
+        probs = F.softmax(logits[0, -1, :], dim=-1)
+
+        top_probs, top_ids = torch.topk(
+            probs, k=5
+        )
+
+        predictions = [
+            (itos[int(i)], round(float(p), 4))
+            for p, i in zip(top_probs, top_ids)
+        ]
+
+        print(f"{ch!r} -> {predictions}")
+
+
 # ============================================================
 # 10. SAVE MODEL AND VOCABULARY
 # ============================================================
@@ -294,6 +342,39 @@ checkpoint = {
 torch.save(checkpoint, "conversation_bigram.pt")
 
 print("\nModel saved to conversation_bigram.pt")
+
+# DEBUG: Compare predictions for H in different contexts
+
+model.eval()
+
+with torch.no_grad():
+    a = torch.tensor(
+        [[stoi["H"]]],
+        dtype=torch.long,
+        device=device
+    )
+
+    b = torch.tensor(
+        [[stoi["u"], stoi["m"], stoi["H"]]],
+        dtype=torch.long,
+        device=device
+    )
+
+    logits_a, _ = model(a)
+    logits_b, _ = model(b)
+
+    probs_a = F.softmax(logits_a[0, -1, :], dim=-1)
+    probs_b = F.softmax(logits_b[0, -1, :], dim=-1)
+
+    print(
+        "Maximum probability difference:",
+        (probs_a - probs_b).abs().max().item()
+    )
+
+    print(
+        "Predictions identical:",
+        torch.allclose(probs_a, probs_b, atol=1e-6)
+    )
 
 
 # ============================================================
